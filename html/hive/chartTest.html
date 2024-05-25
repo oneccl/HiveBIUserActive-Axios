@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>条形</title>
+    <!--引入echarts包-->
+    <script type="text/javascript" src="../../js/echarts.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.6.0.min.js"></script>
+    <style>
+        div{
+            /* 柱状图大小 */
+            width: 465px;
+            height: 358px;
+        }
+    </style>
+</head>
+<body>
+<!--显示图标处-->
+<div id="main"></div>
+<script>
+    var chartDom = document.getElementById('main');
+    var myChart = echarts.init(chartDom);  // (chartDom,'dark')：深色模式
+    var option = {
+        // x轴
+        xAxis: {
+            type: 'category',
+            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        },
+        // y轴
+        yAxis: {
+            type: 'value'
+        },
+        // 柱子颜色设置：'#5470c6'
+        color:['#73c0de'],
+        series: [
+            {
+                data: [120, 200, 150, 80, 70, 110, 130],
+                type: 'bar'  // 柱状图
+            }
+        ]
+    };
+    myChart.setOption(option);
+</script>
+</body>
+</html>

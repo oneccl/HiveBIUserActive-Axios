@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IPUser</title>
+    <!--引入echarts包-->
+    <script type="text/javascript" src="../../js/echarts.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.6.0.min.js"></script>
+    <style>
+        div {
+            /* 图标大小 */
+            width: 600px;
+            height: 300px;
+            /* 图标位置 */
+            margin-top: 20px;
+            margin-left: 30%;
+            border: 2px solid red;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<label>
+    <select id="slt">
+        <option value="2021-11-01">--请选择--</option>
+        <option>2021-11-01</option>
+        <option>2021-11-02</option>
+    </select>
+</label><br><br>
+<button id="btn">确定</button>
+<!--显示图标处-->
+<div id="main"></div>
+</body>
+<script>
+    $("#btn").click(function () {
+        let v = $("#slt").val();
+        $.getJSON("http://localhost:8080/getDtData",{'dt':v},function (res) {
+            const hour = res.hours;
+            const valArr = res.hourCounts;
+            getData(v,hour,valArr);
+        })
+    })
+
+    function getData(dt,hour,value) {
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            title: {
+                top: 25,
+                left: 'center',
+                text: dt+'每小时用户访问量统计'
+            },
+            tooltip: {           // 提示框
+                trigger: 'axis',
+                extraCssText: 'width:100px;height:40px;'   // 提示框大小
+            },
+            xAxis: {
+                data: hour
+            },
+            yAxis:
+                {},
+            grid: {             // 图标相对div位置
+                bottom: '20%',
+                top: '30%'
+            },
+            series: {
+                type: 'line',   // 折线
+                showSymbol: false,
+                data: value
+            }
+        };
+        myChart.setOption(option);
+    }
+
+</script>
+</html>

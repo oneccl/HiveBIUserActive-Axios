@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--引入echarts包-->
+    <script type="text/javascript" src="../../js/echarts.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.6.0.min.js"></script>
+    <!--vue-->
+    <script src="../../js/vue.js"></script>
+    <!--axios-->
+    <script src="../../js/axios.js"></script>
+    <style>
+        #select{
+            width: 80px;
+            height: 30px;
+            border-radius: 5px;
+            margin-left: 30px;
+            font-size: 16px;
+        }
+        #btn{
+            width: 60px;
+            height: 30px;
+            background: dodgerblue;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #area{
+            /* 柱状图大小 */
+            width: 800px;
+            height: 500px;
+            padding-left: 280px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <label>
+        <select id="select">
+            <option value="北京">城市榜</option>
+            <option v-for="city in cities">{{city}}</option>
+        </select>
+        <input id="btn" type="button" value="确定" onclick="area()">
+    </label>
+    <!--显示图标处-->
+    <div id="area"></div>
+</div>
+<script>
+
+    // 城市热度排行
+    function getByCity() {
+        let xData = [];
+        let yData = [];  // 放入方法内，每个城市显示前清空数据
+        $.getJSON("http://localhost:8080/areaDouYinData",{"city":city},function (res) {
+            for (let i = 0; i < res.length; i++) {
+                xData[i]=res[i].digg
+                yData[i]=res[i].userId+"("+res[i].nickName+")"  // 拼接昵称
+            }
+            view(xData.reverse(),yData.reverse(),city);
+        })
+    }
+    let city;
+    function area() {
+        city = $("#select").val();
+        window.setInterval("getByCity()",2000)
+    }
+
+    // 图表显示方法
+    function view(xData, yData, city) {
+        var chartDom = document.getElementById('area');
+        var myChart = echarts.init(chartDom);
+        var option = {  // 标题
+            title: {
+                top: 10,
+                left: 'center',
+                text: '抖音用户热度实时统计'+city+'市榜',
+                textStyle: {
+                    fontSize: 20,
+                    color: 'red'
+                }
+            },
+            tooltip: {  // 提示框
+                trigger: 'axis',
+                extraCssText: 'width:120px;height:45px;',  // 提示框大小
+                backgroundColor: "#fac858",  // 背景颜色
+                textStyle: {color: "blue", fontSize: 16},  // 文本样式
+            },
+            //legend: {}, // 图例组件
+            grid: {     // 图标相对div位置
+                left: "5%",
+                top: "15%",
+                right: "5%",
+                bottom: "10%",
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+            },
+            yAxis: {
+                type: 'category',
+                data: yData
+            },
+            // #5470c6 #91cc75 #fac858 #ee6666 #73c0de #3ba272 #fc8452 #9a60b4 #ea7ccc
+            color: ['#91cc75'],
+            series: {
+                //name: 'A类型',    // 图例名
+                type: 'bar',   // 柱状图
+                barWidth: 20,  // 柱子宽度
+                data: xData
+            }
+        };
+        myChart.setOption(option);
+    }
+
+    // 参数传递
+    new Vue({
+        el: "#app",
+        data: {
+            cities:{},
+        },
+        mounted(){
+            const th = this;
+            axios({
+                method: "get",
+                url: "http://localhost:8080/getCities"
+            }).then(function (res) {
+                th.cities=res.data;
+            })
+        }
+    })
+
+</script>
+</body>
+</html>

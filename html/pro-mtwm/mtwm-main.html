@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>美团外卖系统大数据分析</title>
+    <script type="text/javascript" src="../../js/echarts.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="../../js/axios.js"></script>
+    <script type="text/javascript" src="../../js/vue.js"></script>
+    <style>
+        #app{
+            width: 100%;
+            height: 100%;
+        }
+        #CityScore{
+            border: 1px solid red;
+            width: 600px;
+            height: 565px;
+            float: left;
+            margin-left: 20px;
+        }
+        #CityScoreModule{
+            width: 600px;
+            height: 520px;
+        }
+        #CtgSc{
+            width: 600px;
+            height: 250px;
+            border: 1px solid blue;
+            float: left;
+            margin-left: 100px;
+        }
+        #CtgScModule{
+            padding-top: 20px;
+            width: 600px;
+            height: 210px;
+        }
+        #CtgMS{
+            width: 600px;
+            height: 312px;
+            border: 1px solid lightsalmon;
+            float: left;
+            margin-left: 100px;
+        }
+        #CtgMsModule{
+            padding-top: 20px;
+            width: 600px;
+            height: 270px;
+        }
+        .select{
+            width: 80px;
+            height: 25px;
+            border-radius: 5px;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+        .btn{
+            width: 50px;
+            height: 25px;
+            border: 1px solid dodgerblue;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        #ctg,#ctgSe{
+            margin-left:0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <h3 style="line-height: 15px;text-align: center;color: deepskyblue">美团外卖系统大数据分析数据看板</h3>
+    <div id="CityScore">
+        <label>
+            <select class="select" id="city">
+                <option value="北京">城市评分榜</option>
+                <option v-for="city in cities">{{city}}</option>
+            </select>
+        </label>
+        <input class="btn" type="button" value="确定" onclick="areaScore()">
+        <div id="CityScoreModule"></div>
+    </div>
+    <div id="CtgSc">
+        <label>
+            <select class="select" id="ctgCity">
+                <option value="北京">城市</option>
+                <option v-for="city in ctgScCities">{{city}}</option>
+            </select>
+            <select class="select" id="ctg">
+                <option value="美食">种类评分榜</option>
+                <option v-for="scCtg in scCategories">{{scCtg}}</option>
+            </select>
+        </label>
+        <input class="btn" type="button" value="确定" onclick="areaCtgScore()">
+        <div id="CtgScModule"></div>
+    </div>
+    <div id="CtgMS">
+        <label>
+            <select class="select" id="ctgCityMs">
+                <option value="北京">城市</option>
+                <option v-for="city in ctgMSCities">{{city}}</option>
+            </select>
+            <select class="select" id="ctgSe">
+                <option value="美食">种类销量榜</option>
+                <option v-for="msCtg in msCategories">{{msCtg}}</option>
+            </select>
+        </label>
+        <input class="btn" type="button" value="确定" onclick="areaCtgMs()">
+        <div id="CtgMsModule"></div>
+    </div>
+
+</div>
+
+<script>
+
+    // 城市店铺评分排行
+
+    let city;
+    function areaScore() {
+        city = $("#city").val();
+        window.setInterval("getByCity()",2000)
+    }
+
+    function getByCity() {
+        let data = [];  // 放入方法内，每个城市显示前清空数据
+        $.getJSON("http://localhost:8080/getScoreByCity",{"city":city},function (res) {
+            for (let i = 0; i < res.length; i++) {
+                data[i]={value: res[i].score, name: res[i].score+"  "+res[i].id+"("+res[i].name+")"}
+            }
+            areaScoreView(city,res.length,data);
+        })
+    }
+
+    function areaScoreView(city,num,items) {
+        var chartDom = document.getElementById('CityScoreModule');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            title: {
+                top: 15,
+                left: 'center',
+                text: city+'美团外卖店铺评分排行Top10',
+                textStyle: {
+                    fontSize: 16,
+                    color: 'red'
+                }
+            },
+            legend: {           // 图例组件
+                top: 395,
+                icon: 'circle', // 图例前为圆点
+            },
+            toolbox: {          // 提示框/工具箱组件
+                show: true,     // 工具箱组件是否展示
+                left: 540,
+                top: 50,
+                feature: {
+                    dataView: { show: true, readOnly: true },  // 数据视图
+                    //restore: { show: true },     // 还原
+                    //saveAsImage: { show: true }  // 保存图片
+                }
+            },
+            series: [{
+                name: '店铺\t\t评分',
+                type: 'pie',
+                radius: [20, 120],      // 内外径：图表大小
+                center: ['50%', '45%'], // 左右和上下位置
+                roseType: 'area',
+                itemStyle: {
+                    borderRadius: num   // item数量
+                },
+                data: items             // item列表：[{},{},...]
+            }]
+        };
+        myChart.setOption(option);
+    }
+
+    // 参数传递
+    new Vue({
+        el: "#app",
+        data: {
+            cities:{},
+            ctgScCities:{},
+            scCategories:{},
+            ctgMSCities:{},
+            msCategories:{}
+        },
+        mounted(){
+            const th = this;
+            axios({
+                method: "get",
+                url: "http://localhost:8080/getCities"
+            }).then(function (res) {
+                alert(res.data)
+                th.cities=res.data;
+            })
+            axios({
+                method: "get",
+                url: "http://localhost:8080/CtgSc/getCities"
+            }).then(function (res) {
+                th.ctgScCities=res.data;
+            })
+            axios({
+                method: "get",
+                url: "http://localhost:8080/CtgSc/getCategories"
+            }).then(function (res) {
+                th.scCategories=res.data;
+            })
+            axios({
+                method: "get",
+                url: "http://localhost:8080/CtgMS/getCities"
+            }).then(function (res) {
+                th.ctgMSCities=res.data;
+            })
+            axios({
+                method: "get",
+                url: "http://localhost:8080/CtgMS/getCategories"
+            }).then(function (res) {
+                th.msCategories=res.data;
+            })
+        },
+
+    })
+
+</script>
+
+<script>
+
+    // 城市各种类的店铺评分排行
+
+    let city1;
+    let ctg1;
+    function areaCtgScore() {
+        city1 = $("#ctgCity").val();
+        ctg1= $("#ctg").val();
+        window.setInterval("getScByCtg()",2000)
+    }
+
+    function getScByCtg() {
+        let category = [];
+        let lineData = [];
+        let barData = [];  // 放入方法内，显示前清空数据
+        $.getJSON("http://localhost:8080/CtgSc/getByCityAndCtg",{"city":city1,"ctg":ctg1},function (res) {
+            for (let i = 0; i < res.length; i++) {
+                category[i]= res[i].id
+                lineData[i]=res[i].score
+                barData[i]=res[i].score
+            }
+            areaCtgScView(category,lineData,barData,city1,ctg1);
+        })
+    }
+
+    function areaCtgScView(category,lineData,barData,city,ctg) {
+        var chartDom = document.getElementById('CtgScModule');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            title: {         // 标题
+                top: 0,
+                left: 'center',
+                text: city+ctg+'类美团外卖店铺评分排行Top10',
+                textStyle: {
+                    fontSize: 16,
+                    color: 'blue'
+                }
+            },
+            tooltip: {      // 提示框、工具箱
+                trigger: 'axis',
+            },
+            legend: {       // 图例
+                top: 30,
+                right: 50,  // 右对齐间距
+                data: ['line', 'bar'],
+                textStyle: {
+                    color: '#ccc'  // 图例文字颜色
+                }
+            },
+            xAxis: {        // X轴
+                data: category,
+                axisLabel: {
+                    rotate: 20   // 倾斜角度
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#ccc'  // X轴及其字体颜色
+                    }
+                }
+            },
+            yAxis: {        // Y轴
+                splitLine: {show: false},  // 是否显示分割线
+                axisLine: {
+                    lineStyle: {
+                        color: '#ccc'  // Y轴及其字体颜色
+                    }
+                }
+            },
+            series: [
+                {
+                    name: 'line',
+                    type: 'line',    // 折线
+                    smooth: true,    // 开启拐点图形
+                    showAllSymbol: true,
+                    symbol: 'emptyCircle',  // 空心圆
+                    symbolSize: 10,  // 空心圆大小
+                    data: lineData
+                },
+                {
+                    name: 'bar',
+                    type: 'bar',     // 柱状图
+                    barWidth: 10,    // 柱子宽度
+                    itemStyle: {
+                        normal: {
+                            barBorderRadius: 10,  // 柱子圆角
+                            color: '#57F5D8'      // 柱子颜色
+                        },
+                    },
+                    data: barData
+                }
+            ]
+        };
+        myChart.setOption(option);
+    }
+
+</script>
+
+<script>
+
+    // 城市各种类的店铺销量排行
+
+    let city2;
+    let ctg2;
+    function areaCtgMs() {
+        city2 = $("#ctgCityMs").val();
+        ctg2= $("#ctgSe").val();
+        window.setInterval("getMsByCtg()",2000)
+    }
+
+    function getMsByCtg() {
+        let xData = [];
+        let yData = [];  // 放入方法内，显示前清空数据
+        $.getJSON("http://localhost:8080/CtgMS/getByCityAndCtg",{"city":city2,"ctg":ctg2},function (res) {
+            for (let i = 0; i < res.length; i++) {
+                yData[i]=res[i].id
+                xData[i]=res[i].month_sales
+            }
+            areaCtgMsView(xData.reverse(),yData.reverse(),city2,ctg2);
+        })
+    }
+
+    function areaCtgMsView(xData,yData,city,ctg) {
+        var chartDom = document.getElementById('CtgMsModule');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            title: {    // 标题
+                top: 0,
+                left: 'center',
+                text: city+ctg+'类美团外卖店铺销量排行Top10',
+                textStyle: {
+                    fontSize: 16,
+                    color: '#fc8452',
+                    lineHeight: 20
+                }
+            },
+            tooltip: {  // 提示框
+                trigger: 'axis',
+                extraCssText: 'width:80px;height:45px;',  // 提示框大小
+                backgroundColor: "#fac858",  // 背景颜色
+                textStyle: {color: "black", fontSize: 16},  // 文本样式
+            },
+            grid: {       // 图标相对div位置
+                left: "7%",     // 图表与左边间距
+                top: "15%",     // 图表与标题间距
+                right: "10%",   // 图表与右边间距
+                bottom: "10%",  // 图表与下边间距
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                axisLine: {
+                    lineStyle: {
+                        color: '#ccc'
+                    }
+                }
+            },
+            yAxis: {
+                type: 'category',
+                axisLine: {
+                    lineStyle: {
+                        color: '#ccc'
+                    }
+                },
+                data: yData
+            },
+            series: {
+                //name: 'A类型',    // 图例名
+                type: 'bar',       // 柱状图
+                barWidth: 10,      // 柱子宽度
+                data: xData,
+                itemStyle: {
+                    normal: {
+                        barBorderRadius: 10,  // 柱子圆角
+                        // #65B581 #fac858 #3ba272 #ea7ccc
+                        color: '#4CDA7D'
+                    },
+                },
+            }
+        };
+        myChart.setOption(option);
+    }
+</script>
+
+</body>
+
+</html>

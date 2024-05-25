@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>各小时用户访问量变化趋势</title>
+    <!--引入echarts包-->
+    <script type="text/javascript" src="../../js/echarts.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.6.0.min.js"></script>
+    <style>
+        div{
+            /* 图表大小 */
+            width: 1000px;
+            height: 500px;
+            /* 图标位置 */
+            margin-top: 50px;
+            margin-left: 13%;
+            border: 2px solid red;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<!--显示图标处-->
+<div id="main"></div>
+</body>
+<script>
+
+    let xData = [];
+    let yData = [];
+
+    function getData() {
+        $.getJSON("http://localhost:8080/getData",function (res) {
+            for (let i = 0; i < res.length; i++) {
+                xData[i]=res[i].hour
+                yData[i]=res[i].uc
+            }
+            getBar(xData,yData);
+        });
+    }
+    // 2s获取一次
+    window.setInterval("getData()",2000)
+
+    function getBar(xData,yData){
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);  // (chartDom,'dark')：深色模式
+        var option = {
+            // x轴
+            xAxis: {
+                type: 'category',
+                data: xData
+            },
+            // y轴
+            yAxis: {
+                type: 'value'
+            },
+            // 柱子颜色设置：'#5470c6'
+            color:['#5470c6'],
+            series: [
+                {
+                    data: yData,
+                    type: 'bar',     // 柱状图
+                    barWidth: '40%'  // 设置宽度
+                }
+            ],
+            // 图表相对div的位置
+            grid: {
+                left: "10%",
+                top: "20%",
+                right: "10%",
+                bottom: "10%",
+                containLabel: true  // 防止溢出
+            },
+            // 标题
+            title: {
+                text: "各小时用户访问量变化趋势",  // 主标题
+                subtext: "活跃用户数据",   // 子标题
+                x: 'center',             // 标题对齐
+                y: 'top',
+                top: 25,                 // 标题位置(textStyle外设置)
+                textStyle: {             // 主标题样式
+                    fontSize: 20,
+                    color: 'blue',
+                }
+            },
+        };
+        myChart.setOption(option);
+    }
+</script>
+</html>
